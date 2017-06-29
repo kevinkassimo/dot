@@ -15,6 +15,7 @@ dot -o *origin* # git remote set origin (o = origin)
 dot -f  # git pull (f = fetch)
 dot -p  # git push origin master (p = push)
 dot -s [filenames] # record and overwrite all files that need to be tracked in .dotrc (s = save)
+dot -e [filenames] # record and overwrite, but would instead include all .* files/directories in BASE directory EXCEPT for those specially specified in the later excluding arguments (e = exclude)
 dot -m *filename* # add a single file to all the dotfiles that need to be tracked (m = more)
 dot -l *filename* # remove some file from .dotrc tracking (l = less)
 dot -a  # stage all files specified in .dotrc (a = add)
@@ -41,6 +42,12 @@ $ dot -c "Initial Commit"
 # commit success of staged files
 $ dot -p
 # pushed to github
+
+$ dot -e ~/.Trash
+# overwrite tracking records, start to track all .* files EXCEPT for ~/.Trash (Trash directory on Mac)
+$ dot -a
+$ dot -c "Now tracking dotfiles"
+$ dot -p
 ```
 
 ## Sorry

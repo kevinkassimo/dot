@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-# Written by Kevin "Kassimo" Qian, 2017. MIT Licensed
+# Created by Kevin "Kassimo" Qian 2017
 
 OPTIND=1
 BASEFILE="$HOME/.dotbase" # In case, may need realpath to remove trailing /
@@ -10,6 +10,19 @@ RC=""
 
 FILEARR=()
 
+function array_contains { 
+    local array="$1[@]"
+    local seeking=$2
+    local in=1
+    for element in "${!array}"; do
+        if [[ $element == $seeking ]]; then
+            in=0
+            break
+        fi
+    done
+    return $in
+}
+
 function err_exit {
     echo "-dot: $1" >&2
     exit 1
@@ -18,6 +31,7 @@ function err_exit {
 function dot_ok {
     exit 0
 }
+
 function dot_err {
     exit 1
 }
@@ -41,14 +55,14 @@ function dot_init {
 # call dot_init here
 dot_init
 
-while getopts "uwrb:iofpsm:l:ac:" opt
+while getopts "uwrb:iofpsem:l:ac:" opt
 do
     case "$opt" in
-    u) # show usage and exit
+    u) # show usage and exit (u = usage)
         echo "Usage: dot -uvwriofpmla -b='/basepath' -c='Commit Message' -s [filenames]"
         dot_ok
         ;;
-    w) # show what is included in dotfiles git add config
+    w) # show what is included in dotfiles git add config (w = what)
         if [ -z "$BASE" ]; then
             echo "Base path for dotfiles is empty. Have you set your base path with -b yet?"
             dot_ok
@@ -59,7 +73,7 @@ do
         
         dot_ok
         ;;
-    r) # reset all and discard original git
+    r) # reset all and discard original git (r = reset)
         while true; do
             read -p "Do you really want to clear dot settings and git? [N/y] " yn
             case $yn in
@@ -151,11 +165,39 @@ do
             if [ ! -f "$var" ] && [ ! -d "$var" ]; then
                 echo "Error: $var is not a valid file or directory"
             else
-                echo "$(realpath $var)\n" >> "$RCFILE"
+                echo "$(realpath $var)" >> "$RCFILE"
                 echo "Adding $(realpath $var) to tracked dotfiles"
             fi
         done
 
+        dot_ok
+        ;;
+    e) # record and overwrite, but would instead include all .* files/directories in BASE directory EXCEPT for those specially specified in the later excluding arguments (e = exclude)
+        arr=()
+        
+        while IFS=  read -r -d $'\0'; do
+            arr+=("$REPLY")
+        done < <(find "$BASE" -maxdepth 1 -name ".[^.]*" -print0)
+        
+        shift
+        > "$RCFILE"
+        echo "Resetting tracked dotfiles"
+        
+        exarr=( "$@" )
+        for var in "${arr[@]}"
+        do
+            if [ ! -f "$var" ] && [ ! -d "$var" ]; then
+                echo "Error: $var is not a valid file or directory"
+            else
+                if array_contains exarr "$var"; then
+                    echo "Excluding $(realpath $var)"
+                else
+                    echo "$(realpath $var)" >> "$RCFILE"
+                    echo "Adding $(realpath $var) to tracked dotfiles"
+                fi
+            fi
+        done
+        
         dot_ok
         ;;
     m) # add a single file to all the dotfiles that need to be tracked (m = more)
