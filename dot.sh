@@ -221,8 +221,8 @@ do
         for i in "${FILEARR[@]}"
         do
             currpath=$(realpath "$i")
-            if [ ! "$currpath" == "$optpath" ]; then
-                echo "$optpath" >> "$RCFILE"
+            if [ "$currpath" != "$optpath" ]; then
+                echo "$currpath" >> "$RCFILE"
             else
                 echo "Removing $currpath from tracked dotfiles. The file will live on, but updates no longer tracked"
             fi
