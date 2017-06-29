@@ -3,12 +3,12 @@
 OPTIND=1
 VERBOSE=false
 BASEFILE="$HOME/.dotbase" # In case, may need realpath to remove trailing /
-BASE=""
+BASE="" # BASE is the path where we will place .git. For the paths of tracked files, we will record full path in .dotrc (with realpath to fetch the full path)
 RCFILE="$HOME/.dotrc"
 RC=""
 
 function err_exit {
-    echo "-dot: $1"
+    echo "-dot: $1" >&2
     exit 1
 }
 
@@ -32,16 +32,6 @@ function dot_init {
 
 }
 
-#function check_basepath {
-#    if [ -z "$BASE" ]; then
-#        if $1; then
-#            err_exit "Base path for dotfiles is empty. Have you set your base path with -b yet?"
-#        else
-#            echo "Base path for dotfiles is empty. Have you set your base path with -b yet?"
-#        fi
-#    fi
-#}
-
 # call dot_init here
 dot_init
 
@@ -54,6 +44,7 @@ do
         ;;
     v) # turn on verbose mode
         VERBOSE=true
+        # do NOT place dot_ok here!
         ;;
     w) # show what is included in dotfiles git add config
         if [ -z "$BASE" ]; then
@@ -127,17 +118,33 @@ do
             err_exit "Please, set base directory for all tracked dotfiles with -b"
         fi
 
-        git init $BASE
+        git init "$BASE"
         if [[ $? -ne 0 ]]; then
             err_exit "-i: Git init error"
         fi
+        
         dot_ok
         ;;
     o) # git remote set origin (o = origin)
+        if [ -z "$BASE" ]; then err_exit "-o: base path is empty"; fi
+        if [ ! -d "$BASE/.git" ]; then err_exit "-o: no directory named $BASE/.git"; fi
+        git --git-dir="$BASE/.git" remote add origin "$OPTARG"
+        
+        if [ $? -ne 0 ]; then err_exit "-o: Git remote add origin error"; else dot_ok; fi
         ;;
     f) # git pull (f = fetch)
+        if [ -z "$BASE" ]; then err_exit "-f: base path is empty"; fi
+        if [ ! -d "$BASE/.git" ]; then err_exit "-f: no directory named $BASE/.git"; fi
+        git --git-dir="$BASE/.git" fetch
+        
+        if [ $? -ne 0 ]; then err_exit "-f: Git fetch error"; else dot_ok; fi
         ;;
     p) # git push origin master (p = push)
+        if [ -z "$BASE" ]; then err_exit "-p: base path is empty"; fi
+        if [ ! -d "$BASE/.git" ]; then err_exit "-p: no directory named $BASE/.git"; fi
+        git --git-dir="$BASE/.git" push origin master
+        
+        if [ $? -ne 0 ]; then err_exit "-p: Git push error"; else dot_ok; fi
         ;;
     s) # record and overwrite all files that need to be tracked in .dotrc (s = save)
         
@@ -150,15 +157,23 @@ do
     l) # remove some file from .dotrc tracking (l = less)
         ;;
     a) # stage all files specified in .dotrc (a = add)
+        if [ -z "$BASE" ]; then err_exit "-a: base path is empty"; fi
+        if [ ! -d "$BASE/.git" ]; then err_exit "-a: no directory named $BASE/.git"; fi
+        git --git-dir="$BASE/.git" add # TODO: what to add?
         
+        if [ $? -ne 0 ]; then err_exit "-a: Git add error"; else dot_ok; fi
         ;;
     c) # commit with commit message (c = commit)
+        if [ -z "$BASE" ]; then err_exit "-c: base path is empty"; fi
+        if [ ! -d "$BASE/.git" ]; then err_exit "-c: no directory named $BASE/.git"; fi
+        git --git-dir="$BASE/.git" commit -m "$OPTARG"
+        
+        if [ $? -ne 0 ]; then err_exit "-o: Git commit error"; else dot_ok; fi
         ;;
     :)
         ;;
     \?)
-        echo "Invalid option: -$OPTARG" >&2
-        exit 1
+        err_exit "Invalid option: -$OPTARG" >&2
         ;;
     esac
 done
