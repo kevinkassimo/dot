@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Written by Kevin "Kassimo" Qian, 2017. MIT Licensed
+
 OPTIND=1
 BASEFILE="$HOME/.dotbase" # In case, may need realpath to remove trailing /
 BASE="" # BASE is the path where we will place .git. For the paths of tracked files, we will record full path in .dotrc (with realpath to fetch the full path)

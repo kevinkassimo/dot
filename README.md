@@ -24,6 +24,7 @@ dot -c "Message" # commit with commit message (c = commit)
 ## Example
 ```bash
 $ dot -b ~
+# setting base path for .git, which will be created and placed in dot -i step below
 $ dot -i
 # empty .git inited
 $ dot -s file0 file1 file2 file3
@@ -43,4 +44,5 @@ $ dot -p
 ```
 
 ## Sorry
-This project will be absolutely lame. There is no support for branches: everything is commited and pushed to __master__ branch. It is created mostly just for fun and for personal use, so many advanced features will NOT be implemented (at least for now as I am a terrible programmer at this stage...)
+This project will be absolutely lame. There is no support for branches: everything is commited and pushed to __master__ branch. It is created mostly just for fun and for personal use, so many advanced features will NOT be implemented (at least for now as I am a terrible programmer at this stage...)  
+No matter what, this repo itself is tracked and updated with `dot`, which actually serves as just a util to simply remember which files in the same folder is partially tracked
