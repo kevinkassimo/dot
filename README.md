@@ -1,5 +1,7 @@
 # dot
-A simple but terrible util for dotfile git management / github publishing
+A simple but terrible util for dotfile git management / github publishing  
+
+It is actually used to __PARTIALLY__ track files you actually wanted to be included in .git. This happens mainly in the `~` directory, where not only are where most of the dotfiles resides, but also many OTHER important private files. `dot` would foolishly record the names of files you actually want to be git recorded, and perhaps saving a bit time in typing filenames. (also, I am trying to avoid exploiting .gitignore, as... I always forget to .gitignore something private and important...)
 
 ## Install
 drop `dot.sh` at somewhere you like, and then add `alias dot=...` in .bashrc to allow easy access of command  
