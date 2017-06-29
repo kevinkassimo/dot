@@ -1,7 +1,6 @@
 #!/bin/sh
 
 OPTIND=1
-VERBOSE=false
 BASEFILE="$HOME/.dotbase" # In case, may need realpath to remove trailing /
 BASE="" # BASE is the path where we will place .git. For the paths of tracked files, we will record full path in .dotrc (with realpath to fetch the full path)
 RCFILE="$HOME/.dotrc"
@@ -29,6 +28,7 @@ function dot_init {
     # readarray FILEARR < "$BASEFILE" # bash 4+ only
     let i=0
     while IFS=$'\n' read -r line_data; do
+        if [[ "${line_data}" = *[[:space:]]* ]] || [ -z "${line_data}" ]; then continue; fi
         FILEARR[i]="${line_data}"
         ((++i))
     done < "$RCFILE"
@@ -39,16 +39,12 @@ function dot_init {
 # call dot_init here
 dot_init
 
-while getopts "uvwrb:iofpsmlac:" opt
+while getopts "uwrb:iofpsm:l:ac:" opt
 do
     case "$opt" in
     u) # show usage and exit
         echo "Usage: dot -uvwriofpmla -b='/basepath' -c='Commit Message' -s [filenames]"
         dot_ok
-        ;;
-    v) # turn on verbose mode
-        VERBOSE=true
-        # do NOT place dot_ok here!
         ;;
     w) # show what is included in dotfiles git add config
         if [ -z "$BASE" ]; then
@@ -81,16 +77,12 @@ do
                     BASE=""
                     RC=""
 
-                    if $VERBOSE; then
-                        echo "dot settings and git cleaned"
-                    fi
+                    echo "dot settings and git cleaned"
 
                     break
                     ;;
                 [Nn]* )
-                    if $VERBOSE; then
-                        echo "Cancelled"
-                    fi
+                    echo "Cancelled"
                     break
                     ;;
                 * ) 
@@ -110,9 +102,7 @@ do
         # saving realpath into .dotbase
         realpath "$OPTARG" > "$BASEFILE"
         
-        if $VERBOSE ; then
-            echo "Base directory of dotfiles is set to $OPTARG"
-        fi
+        echo "Base directory of dotfiles is set to $OPTARG"
 
         dot_ok
         ;;
@@ -151,15 +141,48 @@ do
         if [ $? -ne 0 ]; then err_exit "-p: Git push error"; else dot_ok; fi
         ;;
     s) # record and overwrite all files that need to be tracked in .dotrc (s = save)
-        
-        
+        shift
+        > "$RCFILE"
+        echo "Resetting tracked dotfiles"
+        for var in "$@"
+        do
+            if [ ! -f "$var" ] && [ ! -d "$var" ]; then
+                echo "Error: $var is not a valid file or directory"
+            else
+                echo "$(realpath $var)\n" >> "$RCFILE"
+                echo "Adding $(realpath $var) to tracked dotfiles"
+            fi
+        done
 
         dot_ok
         ;;
     m) # add a single file to all the dotfiles that need to be tracked (m = more)
+        optpath=$(realpath "$OPTARG")
+        for i in "${FILEARR[@]}"
+        do
+            currpath=$(realpath "$i")
+            if [[ "$currpath" == "$optpath" ]]; then
+                echo "$optpath already tracked"
+                dot_ok
+            fi
+        done
+        # not found
+        echo "$optpath" >> "$RCFILE"
+        echo "Adding $optpath to tracked dotfiles"
         dot_ok
         ;;
     l) # remove some file from .dotrc tracking (l = less)
+        > "$RCFILE" # clear file first to avoid trouble
+        optpath=$(realpath "$OPTARG")
+        for i in "${FILEARR[@]}"
+        do
+            currpath=$(realpath "$i")
+            if [ ! "$currpath" == "$optpath" ]; then
+                echo "$optpath" >> "$RCFILE"
+            else
+                echo "Removing $currpath from tracked dotfiles. The file will live on, but updates no longer tracked"
+            fi
+        done
         dot_ok
         ;;
     a) # stage all files specified in .dotrc (a = add)
@@ -182,7 +205,7 @@ do
         if [ $? -ne 0 ]; then err_exit "-o: Git commit error"; else dot_ok; fi
         ;;
     :)
-        dot_err
+        err_exit "Missing argument"
         ;;
     \?)
         err_exit "Invalid option: -$OPTARG" >&2
