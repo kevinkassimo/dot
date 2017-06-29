@@ -7,6 +7,8 @@ BASE="" # BASE is the path where we will place .git. For the paths of tracked fi
 RCFILE="$HOME/.dotrc"
 RC=""
 
+FILEARR=()
+
 function err_exit {
     echo "-dot: $1" >&2
     exit 1
@@ -23,13 +25,15 @@ function dot_err {
 function dot_init {
     touch "$RCFILE" # create .dotrc if not exist
     touch "$BASEFILE"
-    OLDIFS=IFS
-    IFS="
-    " # setting newline as IFS
     
-# while read 
+    # readarray FILEARR < "$BASEFILE" # bash 4+ only
+    let i=0
+    while IFS=$'\n' read -r line_data; do
+        FILEARR[i]="${line_data}"
+        ((++i))
+    done < "$RCFILE"
+    
     BASE=$(cat "$BASEFILE")
-
 }
 
 # call dot_init here
@@ -39,7 +43,7 @@ while getopts "uvwrb:iofpsmlac:" opt
 do
     case "$opt" in
     u) # show usage and exit
-        echo "Usage: dot -uva -c='Commit Message' -s [filenames]"
+        echo "Usage: dot -uvwriofpmla -b='/basepath' -c='Commit Message' -s [filenames]"
         dot_ok
         ;;
     v) # turn on verbose mode
@@ -150,16 +154,23 @@ do
         
         
 
-        exit 0
+        dot_ok
         ;;
     m) # add a single file to all the dotfiles that need to be tracked (m = more)
+        dot_ok
         ;;
     l) # remove some file from .dotrc tracking (l = less)
+        dot_ok
         ;;
     a) # stage all files specified in .dotrc (a = add)
         if [ -z "$BASE" ]; then err_exit "-a: base path is empty"; fi
         if [ ! -d "$BASE/.git" ]; then err_exit "-a: no directory named $BASE/.git"; fi
-        git --git-dir="$BASE/.git" add # TODO: what to add?
+        # git --git-dir="$BASE/.git" add # TODO: what to add?
+        
+        for i in "${FILEARR[@]}"
+        do
+            git --git-dir="$BASE/.git" add "$i"
+        done
         
         if [ $? -ne 0 ]; then err_exit "-a: Git add error"; else dot_ok; fi
         ;;
@@ -171,6 +182,7 @@ do
         if [ $? -ne 0 ]; then err_exit "-o: Git commit error"; else dot_ok; fi
         ;;
     :)
+        dot_err
         ;;
     \?)
         err_exit "Invalid option: -$OPTARG" >&2
