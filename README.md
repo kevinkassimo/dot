@@ -3,6 +3,9 @@ A simple but terrible util for dotfile git management / github publishing
 
 It is actually used to __PARTIALLY__ track files you actually wanted to be included in .git. This happens mainly in the `~` directory, where not only are where most of the dotfiles resides, but also many OTHER important private files. `dot` would foolishly record the names of files you actually want to be git recorded, and perhaps saving a bit time in typing filenames. (also, I am trying to avoid exploiting .gitignore, as... I always forget to .gitignore something private and important...)
 
+## Notice
+Noticed that many prefer using soft links or GNU stow (which is in essence STILL soft link). When I wrote this script __my brain was just not functioning well__... Anyways, if you hate soft links, this script may still be of certain use.
+
 ## Install
 drop `dot.sh` at somewhere you like, and then add `alias dot=...` in .bashrc to allow easy access of command  
 
